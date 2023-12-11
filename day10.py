@@ -131,12 +131,11 @@ L7JLJL-JLJLJL--JLJ.L""" # 10
 
 c = test_input1
 
-with open('day10_input.txt', 'r') as f:
-    c = f.read().strip()
+# with open('day10_input.txt', 'r') as f:
+#     c = f.read().strip()
 
 # we can actually take the graph from above and convert the main loop
 # into a numpy array
-plt.close('all')
 lines = c.split()
 start, graph = construct_graph(c)
 
@@ -178,8 +177,8 @@ for edge in sorted(graph.edges):
             if matrix[x, y]: continue
             matrix[x, y] = True
             # print(x, y)
-            # plt.imshow(matrix, alpha=0.2)
-            # plt.pause(0.1)
+            plt.imshow(matrix, alpha=0.2)
+            plt.pause(0.1)
 
 
 
@@ -194,6 +193,7 @@ from skimage.segmentation import flood, flood_fill
 
 checkers = data.checkerboard()
 filled_checkers = flood_fill(matrix, (0, 0), 2)
+plt.imshow(filled_checkers)
 
 pixelcount = 0
 for x, y in zip(*np.where(filled_checkers==0)):
