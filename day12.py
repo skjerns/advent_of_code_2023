@@ -21,8 +21,8 @@ test_input = """???.### 1,1,3
 
 c = test_input
 
-# with open('day12_input.txt', 'r') as f:
-#     c = f.read().strip()
+with open('day12_input.txt', 'r') as f:
+    c = f.read().strip()
 
 
 def get_n_arangements(row, groups, indent=0):
@@ -82,13 +82,16 @@ def get_groups(row):
     return [np.array(g) for g in groups]
 
 @profile
-def get_arangements(subrow, indent=0):
-    for group in groups:
-        pass
-    if subrow.sum()<=len(subrow):
+def get_arangements(group, expected):
+    if len(group)==0:
+        return [0]
+
+    group.sum()
+    # is this group already complete?
+    if group.sum()<=len(group):
         streak = 0
         springs = []
-        for x in subrow:
+        for x in group:
             if x:
                 streak+=1
             elif streak:
@@ -96,16 +99,26 @@ def get_arangements(subrow, indent=0):
                 streak = 0
         else:
             springs += [streak]
-
         return [springs] # configuration found
 
     groups = []
-    first_idx = np.argmax(subrow==9)
-    '?###????????'.split('?')
-    for opt in [0, 1]:
-        subrow[first_idx] = opt
-        groups += get_n_arangements(subrow.copy(), indent+1)
-    return groups
+    first_idx = np.argmax(group==9)
+    # first the case that it is a dot and divides the row
+    group = group.copy()
+    group[first_idx] = 0
+    groups = get_groups(group)
+    for groupx in groups:
+        arrangements = get_arangements(groupx, expected)
+        # print(arrangements)
+
+    # second case that it is a sharp and connects
+    group[first_idx] = 1
+    groups = get_groups(group)
+    for groupx in groups:
+        arrangements = get_arangements(groupx, expected)
+        # print(arrangements)
+
+    return None
 
 @profile
 def match_groups(group_options, expected):
@@ -122,15 +135,11 @@ arrangements = []
 for line in tqdm(c.strip().split('\n')):
     row, expected = line.split(' ')
     expected = [int(x) for x in expected.split(',')]
-    row = (row+'?')*2
-    expected *= 2
+    row = (row+'?')*5
+    expected *= 5
     row = np.array([mapping[x] for x in row], dtype=np.int8)
-
-    groups = get_groups(row)
-    group_options = get_arangements(groups)
-    counts = match_groups(group_options, expected)
+    get_arangements(row, expected)
 
     arrangements.append(counts)
-
 
 print(sum(arrangements))
