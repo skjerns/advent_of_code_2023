@@ -13,6 +13,7 @@ import networkx
 import heapq
 import psutil
 
+
 test_input = """2413432311323
 3215453535623
 3255245654254
@@ -29,8 +30,8 @@ test_input = """2413432311323
 
 c = test_input
 
-# with open('day17_input.txt', 'r') as f:
-#     c = f.read().strip()
+with open('day17_input.txt', 'r') as f:
+    c = f.read().strip()
 
 
 #%% failed dijkstra apporach
@@ -52,11 +53,11 @@ class Node():
 
     def __lt__(self, other):
         # return self.r>other.r and self.c>other.c
-        if self.curr_heatloss<other.curr_heatloss:
-            return True
+        return self.curr_heatloss<other.curr_heatloss
+            # return True
         # elif self.curr_heatloss==other.curr_heatloss:
         #     return self.r>other.r or self.c>other.c
-        return False
+        # return False
 
     def __init__(self, r, c, grid, direction, streak, heatloss, prev_node=None):
         self.r = r
@@ -65,7 +66,7 @@ class Node():
         self.direction = direction
         self.streak=streak
         self.curr_heatloss = heatloss+grid[r, c]
-        self.prev_node = prev_node
+        self.prev_node = None
         # if streak>3:
         #     self.curr_heatloss = np.inf
 
@@ -105,17 +106,22 @@ class Grid():
         self.not_visited = []
         manhatten_mask = np.eye(grid.shape[0], grid.shape[1], k=0)
         manhatten_mask += np.eye(grid.shape[0], grid.shape[1], k=1)
-        self.upper_bound = grid[manhatten_mask.astype(bool)].sum()
+        if heuristic:
+            self.upper_bound = grid[manhatten_mask.astype(bool)].sum()
+        else:
+            self.upper_bound = np.inf
+
         heapq.heappush(self.not_visited, self.curr_node)
+
         # self.not_visited = [self.curr_node]
 
     def explore_neighbours(self):
         # visit lowest node
         try:
             self.curr_node = heapq.heappop(self.not_visited)
-            if self.curr_node.r == grid.shape[0]-1 and self.curr_node.c==grid.shape[1]-1:
-                if self.curr_node.curr_heatloss<self.upper_bound:
-                    self.upper_bound = self.curr_node.curr_heatloss
+            # if self.curr_node.r == grid.shape[0]-1 and self.curr_node.c==grid.shape[1]-1:
+            #     if self.curr_node.curr_heatloss<self.upper_bound:
+            #         self.upper_bound = self.curr_node.curr_heatloss
         except IndexError:
             return False
 
@@ -144,15 +150,15 @@ class Grid():
     def plot_heatmap(self):
         plt.cla()
         grid = self.grid
-        heatmap= np.zeros(self.grid.shape)
+        heatmap= np.zeros(self.grid.shape, dtype=int)
         # for node in self.not_visited:
         #     heatmap[node.r, node.c] = node.curr_heatloss
         ax = plt.gca()
 
-        for node in self.visited:
+        for node in sorted(self.visited, reverse=True):
             heatmap[node.r, node.c] = node.curr_heatloss
 
-        vmax = self.grid[np.eye(*self.grid.shape, dtype=bool)].sum()
+        vmax = max(self.grid[np.eye(*self.grid.shape, dtype=bool)].sum(), heatmap.max())
         ax.imshow(heatmap, vmax=vmax, origin='upper')
         # ax.imshow(grid, alpha=0.2)
         if grid.shape[0]<20:
@@ -160,8 +166,8 @@ class Grid():
             plt.yticks(np.arange(grid.shape[0]))
             plt.tick_params(labeltop=True, labelright=True)
 
-            for node in self.visited:
-                text = ax.text(node.c, node.r, node.curr_heatloss,
+            for node in sorted(self.visited):
+                text = ax.text(node.c, node.r, heatmap[node.r, node.c],
                                fontsize=14, ha="center", va="center",
                                color="green")
 
@@ -249,7 +255,7 @@ def get_neighbours_ultra(self):
             r, c = [r*4, c*4]
             new_streak = 4
         else:
-            new_streak = 1 if self.direction!=d else self.streak+1
+            new_streak = self.streak+1
         next_r = self.r + r
         next_c = self.c + c
 
@@ -266,7 +272,7 @@ def get_neighbours_ultra(self):
             # except Exception:
                 # pass
         # no more than 10 moves in one direction
-        if new_streak>9:
+        if new_streak>10:
             continue
         next_node = Node(next_r, next_c, self.grid, direction=d,
                          streak = new_streak,  heatloss=self.curr_heatloss + heatloss_path,
@@ -275,7 +281,7 @@ def get_neighbours_ultra(self):
     return neighbours
 
 Node.get_neighbours = get_neighbours_ultra
-
+grid = test_input
 grid = c
 # grid = """111111111111
 # 999999999991
@@ -303,6 +309,7 @@ while self.explore_neighbours():
 
     # print(len(curr_node))
     # input()
+self.plot_heatmap()
 
 heatlosses = [node.curr_heatloss for node in self.visited if node.r==grid.shape[0]-1 and node.c==grid.shape[1]-1]
 print(f'{min(heatlosses)=}  {heatlosses=}')
